@@ -37,4 +37,6 @@ CString *cstring_Set(CString *string, uint32_t difference, const void *val, ...)
 
 CString *cstring_Clear(CString *string);
 
+
+
 #endif //CSTRING_CSTRING_H

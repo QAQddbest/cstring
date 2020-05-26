@@ -46,9 +46,20 @@ uint8_t cstring_NeedTrdSfy(CString *string, cstring_LockFn lockFn, void *mutex) 
     return 0;
 }
 
+/**
+ * Do not call this function directly. Create a CString object and initialize it.
+ * @param capacity CString's capacity
+ * @param val string
+ * @param ...
+ * @return
+ *      CString - Successful. The CString object passed in.
+ *      NULL - Failed.
+ */
 CString *_cstring_New(uint32_t capacity, const void *val, ...) {
     // Initialize struct CString
     CString *string = malloc(sizeof(CString));
+    if(string == NULL)
+        return NULL;
     string->ctx = calloc(capacity + 1, sizeof(char));
     (*(char **) (&string->ctx))[capacity] = '\0';
     string->capacity = capacity;
@@ -63,6 +74,10 @@ CString *_cstring_New(uint32_t capacity, const void *val, ...) {
     return string;
 }
 
+/**
+ * Release the CString object
+ * @param string CString object
+ */
 void cstring_Release(CString *string) {
     if (string == NULL) {
         return;
@@ -73,6 +88,14 @@ void cstring_Release(CString *string) {
     _Unlock(string);
 }
 
+/**
+ * Rearrange CString's capacity
+ * @param string CString object
+ * @param capacity CString's capacity
+ * @return
+ *      CString - Successful. The CString object passed in.
+ *      NULL - Failed.
+ */
 CString *cstring_Resize(CString *string, int64_t capacity) {
     if (string == NULL) {
         return NULL;
@@ -86,6 +109,16 @@ CString *cstring_Resize(CString *string, int64_t capacity) {
     return string;
 }
 
+/**
+ * Do not call this function directly.
+ * @param string CString's object
+ * @param difference difference on current capacity
+ * @param val
+ * @param ...
+ * @return
+ *      CString - Successful. The CString object passed in.
+ *      NULL - Failed.
+ */
 CString *_cstring_Extend(CString *string, uint32_t difference, const void *val, ...) {
     if (string == NULL) {
         return NULL;
@@ -103,6 +136,16 @@ CString *_cstring_Extend(CString *string, uint32_t difference, const void *val, 
     return string;
 }
 
+/**
+ * Set string's content
+ * @param string CString's object
+ * @param difference difference on current capacity
+ * @param val
+ * @param ...
+ * @return
+ *      CString - Successful. The CString object passed in.
+ *      NULL - Failed.
+ */
 CString *cstring_Set(CString *string, uint32_t difference, const void *val, ...){
     if (string == NULL) {
         return NULL;
