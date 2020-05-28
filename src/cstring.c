@@ -4,6 +4,14 @@
 #include <string.h>
 #include "cstring.h"
 
+#ifdef C_CSTRING_MUL_THREAD
+#define Lock(string) _Lock(string)
+#define Unlock(string) _Unlock(string)
+#else
+#define Lock(string) ((void)0)
+#define Unlock(string) ((void)0)
+#endif
+
 /**
  * Local function. Used for thread safety
  * @param string CString object
@@ -34,7 +42,7 @@ static inline void _Unlock(CString *string) {
  *      1 - CString object is NULL
  *      2 - failed. The CString object already has it's Lock function and mutex.
  */
-uint8_t cstring_NeedTrdSfy(CString *string, cstring_LockFn lockFn, void *mutex) {
+uint8_t c_cstring_NeedTrdSfy(CString *string, CStringLockFn lockFn, void *mutex) {
     if (string == NULL) {
         return 1;
     }
@@ -78,14 +86,14 @@ CString *_cstring_New(uint32_t capacity, const void *val, ...) {
  * Release the CString object
  * @param string CString object
  */
-void cstring_Release(CString *string) {
+void c_cstring_Release(CString *string) {
     if (string == NULL) {
         return;
     }
-    _Lock(string);
+    Lock(string);
     free(string->ctx);
     free(string);
-    _Unlock(string);
+    Unlock(string);
 }
 
 /**
@@ -96,16 +104,16 @@ void cstring_Release(CString *string) {
  *      CString - Successful. The CString object passed in.
  *      NULL - Failed.
  */
-CString *cstring_Resize(CString *string, int64_t capacity) {
+CString *c_cstring_Resize(CString *string, int64_t capacity) {
     if (string == NULL) {
         return NULL;
     }
-    _Lock(string);
+    Lock(string);
     string->ctx = realloc(string->ctx, capacity);
     string->capacity = capacity;
     (*(char **) (&string->ctx))[capacity] = '\0';
     string->size = strlen(string->ctx);
-    _Unlock(string);
+    Unlock(string);
     return string;
 }
 
@@ -124,14 +132,14 @@ CString *_cstring_Extend(CString *string, uint32_t difference, const void *val, 
         return NULL;
     }
     if (difference != 0)
-        cstring_Resize(string, (int64_t) (string->capacity) + difference);
+        c_cstring_Resize(string, (int64_t) (string->capacity) + difference);
     // Assignment
     va_list args;
     va_start(args, val);
-    _Lock(string);
+    Lock(string);
     vsprintf(((*(char **) (&string->ctx)) + string->size), val, args);
     string->size = strlen(string->ctx);
-    _Unlock(string);
+    Unlock(string);
     va_end(args);
     return string;
 }
@@ -146,19 +154,19 @@ CString *_cstring_Extend(CString *string, uint32_t difference, const void *val, 
  *      CString - Successful. The CString object passed in.
  *      NULL - Failed.
  */
-CString *cstring_Set(CString *string, uint32_t difference, const void *val, ...){
+CString *c_cstring_Set(CString *string, uint32_t difference, const void *val, ...){
     if (string == NULL) {
         return NULL;
     }
     if (difference != 0)
-        cstring_Resize(string, (int64_t) (string->capacity) + difference);
+        c_cstring_Resize(string, (int64_t) (string->capacity) + difference);
     // Assignment
     va_list args;
     va_start(args, val);
-    _Lock(string);
+    Lock(string);
     vsprintf(string->ctx, val, args);
     string->size = strlen(string->ctx);
-    _Unlock(string);
+    Unlock(string);
     va_end(args);
     return string;
 }
@@ -170,13 +178,16 @@ CString *cstring_Set(CString *string, uint32_t difference, const void *val, ...)
  *      CString - successful. The CString object passed in.
  *      NULL - Failed.
  */
-CString *cstring_Clear(CString *string){
+CString *c_cstring_Clear(CString *string){
     if (string == NULL) {
         return NULL;
     }
-    _Lock(string);
+    Lock(string);
     memset(string->ctx, 0, string->capacity);
     string->size=0;
-    _Unlock(string);
+    Unlock(string);
     return string;
 }
+
+#undef Lock
+#undef Unlock
